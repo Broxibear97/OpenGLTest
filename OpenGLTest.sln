@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2002
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenGLTest", "OpenGLTest\OpenGLTest.csproj", "{A63C37F3-6EBA-467F-9BE0-FC664DAA15B8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A63C37F3-6EBA-467F-9BE0-FC664DAA15B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A63C37F3-6EBA-467F-9BE0-FC664DAA15B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A63C37F3-6EBA-467F-9BE0-FC664DAA15B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A63C37F3-6EBA-467F-9BE0-FC664DAA15B8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0AC433BC-B678-4AD9-BB38-22BB29E2D7DD}
+	EndGlobalSection
+EndGlobal
