@@ -1,22 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Input;
+using System.IO;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace OpenGLTest
 {
     public sealed class MainWindow : GameWindow
     {
+
         private int _program;
-        private int _vertexArray;
+        private double _time;
+        private string _title = "Test";
+        List<RenderObject> _renderObjects = new List<RenderObject>();
 
-
-
-        public MainWindow() : base(1280, 720, GraphicsMode.Default, "OpenGL Test", GameWindowFlags.Default, DisplayDevice.Default, 4, 0, GraphicsContextFlags.ForwardCompatible)
+        public MainWindow()
+            : base(
+                 1280,
+                 720,
+                 GraphicsMode.Default,
+                 "test",
+                 GameWindowFlags.Default,
+                 DisplayDevice.Default,
+                 4,
+                 0,
+                 GraphicsContextFlags.ForwardCompatible)
         {
-            Title += ": OpenGL Version: " + GL.GetString(StringName.Version);
+            _title += ": OpenGL Version: " + GL.GetString(StringName.Version);
         }
 
         protected override void OnResize(EventArgs e)
@@ -27,20 +40,23 @@ namespace OpenGLTest
         protected override void OnLoad(EventArgs e)
         {
             CursorVisible = true;
-            _program = CompileShaders();
-            GL.GenVertexArrays(1, out _vertexArray);
-            GL.BindVertexArray(_vertexArray);
+            _program = CreateProgram();
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
             Closed += OnClosed;
+
+            _renderObjects.Add(new RenderObject(VertexFactory.GenerateSquare(Color4.Blue)));
+
+
         }
 
-        private void OnClosed(object sender, EventArgs e)
+        private void OnClosed(object sender, EventArgs eventArgs)
         {
             Exit();
         }
 
         public override void Exit()
         {
-            GL.DeleteVertexArrays(1, ref _vertexArray);
             GL.DeleteProgram(_program);
             base.Exit();
         }
@@ -52,9 +68,9 @@ namespace OpenGLTest
 
         private void HandleKeyboard()
         {
-            var KeyState = Keyboard.GetState();
+            var keyState = Keyboard.GetState();
 
-            if (KeyState.IsKeyDown(OpenTK.Input.Key.Escape))
+            if (keyState.IsKeyDown(Key.Escape))
             {
                 Exit();
             }
@@ -62,41 +78,67 @@ namespace OpenGLTest
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            Title = $"(Vsync: {VSync}) FPS: {1f / e.Time:0}";
+            _time += e.Time;
+            Title = $"{_title}: (Vsync: {VSync}) FPS: {1f / e.Time:0}";
 
-            Color4 backColour = new Color4(0.1f, 0.1f, 0.3f, 1.0f);
+            Color4 backColour;
+            backColour.A = 1.0f;
+            backColour.R = 0.1f;
+            backColour.G = 0.1f;
+            backColour.B = 0.3f;
             GL.ClearColor(backColour);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            GL.UseProgram(_program);
-            GL.DrawArrays(PrimitiveType.Points, 0, 1);
-            GL.PointSize(10);
+            foreach (RenderObject obj in _renderObjects)
+            {
+                obj.Render();
+            }
 
+            GL.UseProgram(_program);
             SwapBuffers();
         }
 
-        private int CompileShaders()
+        private int CompileShader(ShaderType type, string path)
         {
-            var vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShader, File.ReadAllText(@"Components\Shaders\vertexShader.vert"));
-            GL.CompileShader(vertexShader);
+            var shader = GL.CreateShader(type);
+            var src = File.ReadAllText(path);
+            GL.ShaderSource(shader, src);
+            GL.CompileShader(shader);
+            var info = GL.GetShaderInfoLog(shader);
+            if (!string.IsNullOrWhiteSpace(info))
+            {
+                Console.WriteLine($"GL.CompileShader [{type}] had info log: {info}");
+            }
+            return shader;
+        }
 
-            var fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fragmentShader, File.ReadAllText(@"Components\Shaders\fragmentShader.frag"));
-            GL.CompileShader(fragmentShader);
-
+        private int CreateProgram()
+        {
             var program = GL.CreateProgram();
-            GL.AttachShader(program, vertexShader);
-            GL.AttachShader(program, fragmentShader);
+            var shaders = new List<int>();
+            shaders.Add(CompileShader(ShaderType.VertexShader, @"Components/Shaders/Vertex/vertexShader.c"));
+            shaders.Add(CompileShader(ShaderType.FragmentShader, @"Components/Shaders/Fragment/fragmentShader.c"));
+
+            foreach (var shader in shaders)
+            {
+                GL.AttachShader(program, shader);
+            }
+
             GL.LinkProgram(program);
 
-            GL.DetachShader(program, vertexShader);
-            GL.DetachShader(program, fragmentShader);
-            GL.DeleteShader(vertexShader);
-            GL.DeleteShader(fragmentShader);
+            var info = GL.GetProgramInfoLog(program);
+            if (!string.IsNullOrWhiteSpace(info))
+            {
+                Console.WriteLine($"GL.LinkProgram had info log: {info}");
+            }
+
+            foreach (var shader in shaders)
+            {
+                GL.DetachShader(program, shader);
+                GL.DeleteShader(shader);
+            }
 
             return program;
         }
-
     }
 }
